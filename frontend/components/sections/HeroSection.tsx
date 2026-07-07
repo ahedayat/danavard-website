@@ -101,7 +101,7 @@ export default function HeroSection() {
               const angle = (i / t.hero.floatingCards.length) * Math.PI * 2;
               const radiusX = 36;
               const radiusY = 40;
-              const left = 50 + Math.cos(angle) * radiusX;
+              const left = 40 + Math.cos(angle) * radiusX;
               const top = 50 + Math.sin(angle) * radiusY;
 
               return (

@@ -69,6 +69,7 @@ export default function ContactSection() {
           </div>
         </SectionReveal>
 
+        {/* <div className="grid lg:grid-cols-5 gap-12 max-w-6xl mx-auto"> */}
         <div className="grid lg:grid-cols-5 gap-12 max-w-6xl mx-auto">
           <div className="lg:col-span-2 space-y-6">
             <SectionReveal delay={0.1}>
@@ -124,7 +125,7 @@ export default function ContactSection() {
               </div>
             </SectionReveal>
           </div>
-
+{/* 
           <div className="lg:col-span-3">
             <SectionReveal delay={0.2}>
               <form
@@ -232,7 +233,7 @@ export default function ContactSection() {
                 </button>
               </form>
             </SectionReveal>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

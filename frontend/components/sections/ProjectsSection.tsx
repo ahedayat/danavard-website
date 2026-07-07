@@ -159,7 +159,7 @@ export default function ProjectsSection() {
                     {project.desc}
                   </p>
 
-                  <button
+                  {/* <button
                     type="button"
                     className="inline-flex items-center text-sm font-bold text-electric-600 dark:text-cyan-400 group/btn mt-auto"
                   >
@@ -169,7 +169,7 @@ export default function ProjectsSection() {
                     ) : (
                       <ArrowRight className="mr-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                     )}
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </SectionReveal>

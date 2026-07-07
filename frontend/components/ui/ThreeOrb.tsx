@@ -5,6 +5,11 @@ import * as THREE from 'three';
 import useUIStore from '@/stores/ui-store';
 import styles from './ThreeOrb.module.css';
 
+const EARTH_RADIUS = 5;
+const NODE_RADIUS_MIN = EARTH_RADIUS * 1.02;
+const NODE_RADIUS_RANGE = EARTH_RADIUS * 0.04;
+const EARTH_TEXTURE_PATH = '/textures/earth/earth_day_4k.png';
+
 export default function ThreeOrb() {
   const containerRef = useRef<HTMLDivElement>(null);
   const theme = useUIStore((s) => s.theme);
@@ -19,7 +24,8 @@ export default function ThreeOrb() {
     camera.position.z = 15;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const updateSize = () => {
       if (!container) return;
@@ -33,6 +39,58 @@ export default function ThreeOrb() {
     updateSize();
     container.appendChild(renderer.domElement);
 
+    const sphereSegments = window.innerWidth < 768 ? 48 : 64;
+
+    const textureLoader = new THREE.TextureLoader();
+    const earthTexture = textureLoader.load(EARTH_TEXTURE_PATH);
+    earthTexture.colorSpace = THREE.SRGBColorSpace;
+    earthTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+    const earthGeometry = new THREE.SphereGeometry(
+      EARTH_RADIUS,
+      sphereSegments,
+      sphereSegments,
+    );
+    const earthMaterial = new THREE.MeshStandardMaterial({
+      map: earthTexture,
+      roughness: 0.82,
+      metalness: 0.02,
+      emissive: new THREE.Color(theme === 'dark' ? 0x0a1a33 : 0x081428),
+      emissiveIntensity: theme === 'dark' ? 0.18 : 0.1,
+    });
+    const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+    earthMesh.renderOrder = 0;
+
+    const atmosphereGeometry = new THREE.SphereGeometry(
+      EARTH_RADIUS * 1.035,
+      Math.max(32, sphereSegments - 16),
+      Math.max(32, sphereSegments - 16),
+    );
+    const atmosphereMaterial = new THREE.MeshBasicMaterial({
+      color: theme === 'dark' ? 0x3d7dff : 0x5a9fff,
+      transparent: true,
+      opacity: theme === 'dark' ? 0.07 : 0.05,
+      side: THREE.BackSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    atmosphereMesh.renderOrder = 1;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, theme === 'dark' ? 0.45 : 0.55);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, theme === 'dark' ? 1.35 : 1.1);
+    sunLight.position.set(8, 4, 6);
+    scene.add(sunLight);
+
+    const rimLight = new THREE.DirectionalLight(
+      theme === 'dark' ? 0x4488ff : 0x6699ff,
+      0.25,
+    );
+    rimLight.position.set(-6, -2, -4);
+    scene.add(rimLight);
+
     const particles = 400;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particles * 3);
@@ -44,7 +102,7 @@ export default function ThreeOrb() {
     for (let i = 0; i < particles; i++) {
       const phi = Math.acos(-1 + (2 * i) / particles);
       const theta = Math.sqrt(particles * Math.PI) * phi;
-      const r = 5 + Math.random() * 0.5;
+      const r = NODE_RADIUS_MIN + Math.random() * NODE_RADIUS_RANGE;
 
       positions[i * 3] = r * Math.cos(theta) * Math.sin(phi);
       positions[i * 3 + 1] = r * Math.sin(theta) * Math.sin(phi);
@@ -67,15 +125,17 @@ export default function ThreeOrb() {
       transparent: true,
       opacity: 0.8,
       blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const points = new THREE.Points(geometry, pointMaterial);
-    scene.add(points);
+    points.renderOrder = 2;
 
     const lineMaterial = new THREE.LineBasicMaterial({
       color: theme === 'dark' ? 0x2563ff : 0x1a4de0,
       transparent: true,
       opacity: theme === 'dark' ? 0.15 : 0.1,
       blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
 
     const lineGeometry = new THREE.BufferGeometry();
@@ -106,9 +166,11 @@ export default function ThreeOrb() {
       new THREE.Float32BufferAttribute(linePositions, 3),
     );
     const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
-    scene.add(lines);
+    lines.renderOrder = 2;
 
     const group = new THREE.Group();
+    group.add(earthMesh);
+    group.add(atmosphereMesh);
     group.add(points);
     group.add(lines);
     scene.add(group);
@@ -131,6 +193,11 @@ export default function ThreeOrb() {
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      earthGeometry.dispose();
+      earthMaterial.dispose();
+      earthTexture.dispose();
+      atmosphereGeometry.dispose();
+      atmosphereMaterial.dispose();
       geometry.dispose();
       pointMaterial.dispose();
       lineGeometry.dispose();
