@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Languages, Moon, Sun } from 'lucide-react';
 import useUIStore from '@/stores/ui-store';
 import { content } from '@/data/site-content';
@@ -42,9 +43,20 @@ export default function Nav() {
           onClick={(e) => handleAnchorClick(e, '#home')}
           className="flex items-center gap-2 group"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-electric-500 to-cyan-400 flex items-center justify-center text-white font-bold text-xl shadow-glow">
-            D
-          </div>
+          <Image
+            src="/logo/danavard-black.svg"
+            alt="Danavard"
+            width={32}
+            height={32}
+            className="w-8 h-8 dark:hidden"
+          />
+          <Image
+            src="/logo/danavard-white.svg"
+            alt="Danavard"
+            width={32}
+            height={32}
+            className="w-8 h-8 hidden dark:block"
+          />
           <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-electric-500 transition-colors">
             {lang === 'fa' ? 'داناورد' : 'Danavard'}
           </span>

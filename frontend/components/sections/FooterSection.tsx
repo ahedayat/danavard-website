@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Github, Instagram, Linkedin, Twitter } from 'lucide-react';
 import useUIStore from '@/stores/ui-store';
 import { content } from '@/data/site-content';
@@ -29,9 +30,13 @@ export default function FooterSection() {
               onClick={(e) => handleAnchorClick(e, '#home')}
               className="flex items-center gap-2 mb-6 inline-flex"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-electric-500 to-cyan-400 flex items-center justify-center text-white font-bold text-2xl shadow-glow">
-                D
-              </div>
+              <Image
+                src="/logo/danavard-white.svg"
+                alt="Danavard"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
               <span className="text-2xl font-bold tracking-tight text-white">
                 {lang === 'fa' ? 'داناورد' : 'Danavard'}
               </span>
