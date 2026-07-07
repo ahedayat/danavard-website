@@ -1,0 +1,114 @@
+---
+description: Danavard React-to-Next.js frontend migration rules
+globs: frontend/**/*,frontend_react/**/*
+alwaysApply: false
+---
+
+# Danavard Frontend Migration Rules
+
+These rules apply only to the migration of the Danavard company website frontend from React.js to Next.js.
+
+## Migration Goal
+
+Convert the existing React.js frontend located in `frontend_react/` into a clean, production-ready Next.js frontend located in `frontend/`.
+
+The generated Next.js UI must visually match the Magic Pattern Preview as closely as possible.
+
+## Scope
+
+* Source directory: `frontend_react/`
+* Target directory: `frontend/`
+* Do not connect the frontend to the backend yet.
+* Preserve the current visual design, layout, spacing, typography, animations, images, icons, colors, and responsive behavior.
+* Extract inline styles into proper CSS files.
+* Keep the implementation clean, modular, and maintainable.
+
+## Next.js Requirements
+
+* Use Next.js App Router.
+* Use TypeScript wherever possible.
+* Use `app/layout.tsx`, `app/page.tsx`, and appropriate route folders.
+* Use Client Components only where interactivity, hooks, Zustand, React Query, or browser APIs are required.
+* Keep static/presentational components as simple as possible.
+
+## Styling Requirements
+
+* Use `app/globals.css` only for global resets, CSS variables, typography, body styles, and shared theme tokens.
+* Use CSS Modules for component-level styles, for example `HeroSection.module.css`.
+* Do not keep large inline style objects in JSX.
+* Preserve the exact visual output from Magic Pattern Preview as much as possible.
+* Reuse assets from the React frontend and copy them into the appropriate Next.js `public/` or component asset structure.
+
+## State Management Rules
+
+* Use Zustand for local/global UI state.
+* Each Zustand store must be placed in a dedicated `.ts` file.
+* Use selectors in components, for example:
+  `const counter = useCounterStore((s) => s.counter)`
+* Do not destructure the whole store in components unless the component truly needs every field.
+* Use `simple-zustand-devtools` only in development mode.
+
+## Forms and Validation
+
+* Use Zod for all forms and user inputs.
+* Phone numbers must be strings and must start with `09`.
+* OTP values must be exactly 6 digits.
+* Keep validation schemas in a logical place, such as `schemas/`, `lib/validations/`, or near the feature if the schema is feature-specific.
+
+## Backend Preparation
+
+Even though the frontend must not connect to the backend yet, prepare the project structure for future backend integration.
+
+Create:
+
+* `services/api-client.ts`
+* `hooks/`
+* appropriate feature-level hooks when needed
+
+Use:
+
+* `axios`
+* `@tanstack/react-query`
+* `@tanstack/react-query-devtools`
+
+Use `useQuery` for read operations and `useMutation` for create/update/delete operations.
+
+Handle React Query errors properly.
+
+## Project Organization
+
+Use a clean professional structure, for example:
+
+* `app/`
+* `components/`
+* `components/sections/`
+* `components/ui/`
+* `hooks/`
+* `services/`
+* `stores/`
+* `schemas/`
+* `types/`
+* `lib/`
+* `public/`
+* `styles/` if needed
+
+Break large JSX files into logical components. Avoid both extremes: do not create huge multi-purpose components, and do not split the code into meaningless tiny fragments.
+
+## Documentation
+
+After finishing the migration work, create or update:
+
+`docs/phase/step-1.1.md`
+
+The report must be written in English and must describe:
+
+* What was migrated
+* What was created in `frontend/`
+* What dependencies were added
+* How styling was migrated
+* How Zustand was prepared
+* How React Query and Axios were prepared
+* How Zod validation was prepared
+* What is intentionally not connected to the backend yet
+* How to run and verify the frontend
+* Any remaining TODOs or assumptions
