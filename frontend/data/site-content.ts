@@ -123,7 +123,7 @@ export const content = {
       email: 'danavard.com@gmail.com',
       address:
         'تهران، میدان انقلاب، خیابان کارگر جنوبی، کوچه شعله‌ور، پلاک ۹، واحد ۱۰',
-      postal: '۱۲۳۴۵۶۷۸۹۰',
+      postal: '۱۳۱۳۹۴۵۲۰۱',
       form: {
         name: 'نام و نام خانوادگی',
         phone: 'شماره تماس',

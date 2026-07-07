@@ -96,16 +96,16 @@ export default function FooterSection() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 text-sm">
+        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-center gap-4 text-slate-500 text-sm">
           <p>{t.footer.copyright}</p>
-          <div className="flex gap-6">
+          {/* <div className="flex gap-6">
             <a href="#" className="hover:text-white transition-colors">
               Privacy Policy
             </a>
             <a href="#" className="hover:text-white transition-colors">
               Terms of Service
             </a>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
