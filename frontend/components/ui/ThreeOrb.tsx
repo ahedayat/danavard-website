@@ -21,7 +21,11 @@ export default function ThreeOrb() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-    camera.position.z = 15;
+
+    const updateCameraDistance = () => {
+      camera.position.z = window.innerWidth < 768 ? 20.5 : 15;
+    };
+    updateCameraDistance();
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -33,6 +37,7 @@ export default function ThreeOrb() {
       const height = container.clientHeight;
       renderer.setSize(width, height);
       camera.aspect = width / height;
+      updateCameraDistance();
       camera.updateProjectionMatrix();
     };
 
@@ -208,7 +213,7 @@ export default function ThreeOrb() {
 
   return (
     <div ref={containerRef} className={styles.orbContainer}>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-electric-500/20 dark:bg-electric-500/30 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 bg-electric-500/20 dark:bg-electric-500/30 rounded-full blur-[60px] md:blur-[80px] pointer-events-none" />
     </div>
   );
 }

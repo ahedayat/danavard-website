@@ -15,6 +15,15 @@ const HeroFlowingRibbonsBackground = dynamic(
   { ssr: false },
 );
 
+const TAG_POSITION_CLASSES = [
+  styles.tag0,
+  styles.tag1,
+  styles.tag2,
+  styles.tag3,
+  styles.tag4,
+  styles.tag5,
+] as const;
+
 export default function HeroSection() {
   const lang = useUIStore((s) => s.lang);
   const dir = useUIStore((s) => (s.lang === 'fa' ? 'rtl' : 'ltr'));
@@ -23,7 +32,7 @@ export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative min-h-screen flex items-center pt-20 overflow-hidden"
+      className="relative min-h-screen flex items-center pt-20"
     >
       <HeroFlowingRibbonsBackground />
       <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center z-10">
@@ -99,17 +108,14 @@ export default function HeroSection() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="relative order-1 lg:order-2 h-[400px] md:h-[600px] w-full"
+          className={`relative order-1 lg:order-2 w-full min-w-0 max-w-full ${styles.orbWrapper}`}
         >
           <ThreeOrb />
 
-          <div className="absolute inset-0 pointer-events-none">
+          <div className={styles.floatingCardsLayer}>
             {t.hero.floatingCards.map((card, i) => {
-              const angle = (i / t.hero.floatingCards.length) * Math.PI * 2;
-              const radiusX = 36;
-              const radiusY = 40;
-              const left = 40 + Math.cos(angle) * radiusX;
-              const top = 50 + Math.sin(angle) * radiusY;
+              const tagPositionClass =
+                TAG_POSITION_CLASSES[i] ?? TAG_POSITION_CLASSES[0];
 
               return (
                 <motion.div
@@ -117,14 +123,14 @@ export default function HeroSection() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.5 + i * 0.1 }}
-                  style={{
-                    left: `${left}%`,
-                    top: `${top}%`,
-                    animationDelay: `${i * 0.5}s`,
-                  }}
-                  className={`absolute glass px-4 py-2 rounded-xl text-xs md:text-sm font-medium text-slate-700 dark:text-slate-200 shadow-soft animate-float-slow whitespace-nowrap ${styles.floatingCard}`}
+                  className={`absolute ${styles.floatingCardAnchor} ${tagPositionClass}`}
                 >
-                  {card}
+                  <div
+                    style={{ animationDelay: `${i * 0.5}s` }}
+                    className={`glass px-4 py-2 rounded-xl text-xs md:text-sm font-medium text-slate-700 dark:text-slate-200 shadow-soft md:animate-float-slow ${styles.floatingCard}`}
+                  >
+                    {card}
+                  </div>
                 </motion.div>
               );
             })}
