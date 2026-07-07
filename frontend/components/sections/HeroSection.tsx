@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import useUIStore from '@/stores/ui-store';
@@ -8,6 +9,11 @@ import { content } from '@/data/site-content';
 import { handleAnchorClick } from '@/lib/scroll';
 import ThreeOrb from '@/components/ui/ThreeOrb';
 import styles from './HeroSection.module.css';
+
+const HeroFlowingRibbonsBackground = dynamic(
+  () => import('@/components/hero/HeroFlowingRibbonsBackground'),
+  { ssr: false },
+);
 
 export default function HeroSection() {
   const lang = useUIStore((s) => s.lang);
@@ -19,6 +25,7 @@ export default function HeroSection() {
       id="home"
       className="relative min-h-screen flex items-center pt-20 overflow-hidden"
     >
+      <HeroFlowingRibbonsBackground />
       <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center z-10">
         <div className="flex flex-col gap-6 order-2 lg:order-1">
           <motion.div
