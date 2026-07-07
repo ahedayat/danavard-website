@@ -1,3 +1,12 @@
+export type SocialIconKey = 'twitter' | 'linkedin' | 'github' | 'instagram';
+
+export type SocialLink = {
+  name: string;
+  href: string;
+  icon: SocialIconKey;
+  ariaLabel?: string;
+};
+
 export const content = {
   fa: {
     nav: {
@@ -136,6 +145,32 @@ export const content = {
     footer: {
       slogan: 'داناورد؛ آورنده دانایی برای ساخت آینده‌ای هوشمندتر',
       copyright: 'تمام حقوق برای روشنای داناورد آریانا محفوظ است.',
+      socialLinks: [
+        // {
+        //   name: 'Twitter',
+        //   href: '#',
+        //   icon: 'twitter',
+        //   ariaLabel: 'داناورد در توییتر',
+        // },
+        {
+          name: 'LinkedIn',
+          href: '#',
+          icon: 'linkedin',
+          ariaLabel: 'داناورد در لینکدین',
+        },
+        {
+          name: 'GitHub',
+          href: 'https://github.com/danavard',
+          icon: 'github',
+          ariaLabel: 'داناورد در گیت‌هاب',
+        },
+        {
+          name: 'Instagram',
+          href: '#',
+          icon: 'instagram',
+          ariaLabel: 'داناورد در اینستاگرام',
+        },
+      ] satisfies SocialLink[],
     },
   },
   en: {
@@ -262,7 +297,7 @@ export const content = {
       email: 'danavard.com@gmail.com',
       address:
         'Unit 10, No. 9, Sholehvar Alley, South Kargar St., Enghelab Sq., Tehran',
-      postal: '1234567890',
+      postal: '1313945201',
       form: {
         name: 'Full Name',
         phone: 'Phone Number',
@@ -275,6 +310,32 @@ export const content = {
     footer: {
       slogan: 'Danavard; Bringing intelligence to build a smarter future.',
       copyright: 'All rights reserved for Roshana Danavard Ariana.',
+      socialLinks: [
+        // {
+        //   name: 'Twitter',
+        //   href: '#',
+        //   icon: 'twitter',
+        //   ariaLabel: 'Danavard on Twitter',
+        // },
+        {
+          name: 'LinkedIn',
+          href: '#',
+          icon: 'linkedin',
+          ariaLabel: 'Danavard on LinkedIn',
+        },
+        {
+          name: 'GitHub',
+          href: 'https://github.com/danavard',
+          icon: 'github',
+          ariaLabel: 'Danavard on GitHub',
+        },
+        {
+          name: 'Instagram',
+          href: '#',
+          icon: 'instagram',
+          ariaLabel: 'Danavard on Instagram',
+        },
+      ] satisfies SocialLink[],
     },
   },
 };

@@ -10,14 +10,45 @@ const NODE_RADIUS_MIN = EARTH_RADIUS * 1.02;
 const NODE_RADIUS_RANGE = EARTH_RADIUS * 0.04;
 const EARTH_TEXTURE_PATH = '/textures/earth/earth_day_4k.png';
 
+const AUTO_ROTATE_Y = 0.002;
+const AUTO_ROTATE_X = 0.001;
+const DRAG_SENSITIVITY = 0.004;
+const MAX_PITCH = Math.PI * 0.45;
+const INERTIA_DAMPING = 0.92;
+const INERTIA_MIN_VELOCITY = 0.00005;
+const DRAG_START_THRESHOLD = 5;
+const INERTIA_THROW_FACTOR = 0.35;
+
+const POINTER_MOVE_OPTIONS: AddEventListenerOptions = { passive: false };
+
+function clampPitch(value: number): number {
+  return Math.max(-MAX_PITCH, Math.min(MAX_PITCH, value));
+}
+
+type InteractionState = {
+  isDragging: boolean;
+  pointerDown: boolean;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+  lastMoveTime: number;
+  velocityX: number;
+  velocityY: number;
+};
+
 export default function ThreeOrb() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasHostRef = useRef<HTMLDivElement>(null);
+  const interactionRef = useRef<HTMLDivElement>(null);
   const theme = useUIStore((s) => s.theme);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const container = containerRef.current;
+    const canvasHost = canvasHostRef.current;
+    const interactionLayer = interactionRef.current;
+    if (!container || !canvasHost || !interactionLayer) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
@@ -32,17 +63,18 @@ export default function ThreeOrb() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const updateSize = () => {
-      if (!container) return;
       const width = container.clientWidth;
       const height = container.clientHeight;
-      renderer.setSize(width, height);
+      if (width === 0 || height === 0) return;
+
+      renderer.setSize(width, height, false);
       camera.aspect = width / height;
       updateCameraDistance();
       camera.updateProjectionMatrix();
     };
 
     updateSize();
-    container.appendChild(renderer.domElement);
+    canvasHost.appendChild(renderer.domElement);
 
     const sphereSegments = window.innerWidth < 768 ? 48 : 64;
 
@@ -180,11 +212,185 @@ export default function ThreeOrb() {
     group.add(lines);
     scene.add(group);
 
-    let animationFrameId: number;
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let reducedMotion = reducedMotionQuery.matches;
+
+    const interaction: InteractionState = {
+      isDragging: false,
+      pointerDown: false,
+      pointerId: -1,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+      lastMoveTime: 0,
+      velocityX: 0,
+      velocityY: 0,
+    };
+
+    const setDraggingVisualState = (dragging: boolean) => {
+      interactionLayer.classList.toggle(styles.interactionLayerDragging, dragging);
+    };
+
+    const applyDragRotation = (deltaX: number, deltaY: number, deltaTime: number) => {
+      const rotationDeltaY = deltaX * DRAG_SENSITIVITY;
+      const rotationDeltaX = deltaY * DRAG_SENSITIVITY;
+
+      group.rotation.y += rotationDeltaY;
+      group.rotation.x = clampPitch(group.rotation.x + rotationDeltaX);
+
+      const frameScale = 16.67 / Math.max(deltaTime, 1);
+      interaction.velocityY = rotationDeltaY * frameScale * INERTIA_THROW_FACTOR;
+      interaction.velocityX = rotationDeltaX * frameScale * INERTIA_THROW_FACTOR;
+    };
+
+    const startDragging = (target: HTMLElement, pointerId: number) => {
+      interaction.isDragging = true;
+      interaction.pointerId = pointerId;
+      setDraggingVisualState(true);
+      target.setPointerCapture(pointerId);
+    };
+
+    const stopDragging = (target: HTMLElement, pointerId: number) => {
+      interaction.isDragging = false;
+      interaction.pointerDown = false;
+      interaction.pointerId = -1;
+      setDraggingVisualState(false);
+
+      if (target.hasPointerCapture(pointerId)) {
+        target.releasePointerCapture(pointerId);
+      }
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+
+      const target = event.currentTarget as HTMLElement;
+
+      interaction.pointerDown = true;
+      interaction.isDragging = false;
+      interaction.pointerId = event.pointerId;
+      interaction.startX = event.clientX;
+      interaction.startY = event.clientY;
+      interaction.lastX = event.clientX;
+      interaction.lastY = event.clientY;
+      interaction.lastMoveTime = performance.now();
+      interaction.velocityX = 0;
+      interaction.velocityY = 0;
+
+      if (event.pointerType === 'mouse') {
+        startDragging(target, event.pointerId);
+      }
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!interaction.pointerDown || event.pointerId !== interaction.pointerId) {
+        return;
+      }
+
+      const target = event.currentTarget as HTMLElement;
+      const deltaFromStartX = event.clientX - interaction.startX;
+      const deltaFromStartY = event.clientY - interaction.startY;
+
+      if (!interaction.isDragging) {
+        if (
+          Math.abs(deltaFromStartX) < DRAG_START_THRESHOLD &&
+          Math.abs(deltaFromStartY) < DRAG_START_THRESHOLD
+        ) {
+          return;
+        }
+
+        if (
+          event.pointerType === 'touch' &&
+          Math.abs(deltaFromStartY) > Math.abs(deltaFromStartX) * 1.4
+        ) {
+          interaction.pointerDown = false;
+          interaction.pointerId = -1;
+          return;
+        }
+
+        startDragging(target, event.pointerId);
+      }
+
+      event.preventDefault();
+
+      const deltaX = event.clientX - interaction.lastX;
+      const deltaY = event.clientY - interaction.lastY;
+      const now = performance.now();
+      const deltaTime = now - interaction.lastMoveTime;
+
+      applyDragRotation(deltaX, deltaY, deltaTime);
+
+      interaction.lastX = event.clientX;
+      interaction.lastY = event.clientY;
+      interaction.lastMoveTime = now;
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (!interaction.pointerDown || event.pointerId !== interaction.pointerId) {
+        return;
+      }
+
+      stopDragging(event.currentTarget as HTMLElement, event.pointerId);
+    };
+
+    const handlePointerCancel = (event: PointerEvent) => {
+      if (!interaction.pointerDown || event.pointerId !== interaction.pointerId) {
+        return;
+      }
+
+      interaction.velocityX = 0;
+      interaction.velocityY = 0;
+      stopDragging(event.currentTarget as HTMLElement, event.pointerId);
+    };
+
+    const handleLostPointerCapture = (event: PointerEvent) => {
+      if (interaction.pointerId !== event.pointerId) return;
+
+      interaction.isDragging = false;
+      interaction.pointerDown = false;
+      interaction.pointerId = -1;
+      setDraggingVisualState(false);
+    };
+
+    const handleReducedMotionChange = (event: MediaQueryListEvent) => {
+      reducedMotion = event.matches;
+      if (reducedMotion) {
+        interaction.velocityX = 0;
+        interaction.velocityY = 0;
+      }
+    };
+
+    interactionLayer.addEventListener('pointerdown', handlePointerDown);
+    interactionLayer.addEventListener('pointermove', handlePointerMove, POINTER_MOVE_OPTIONS);
+    interactionLayer.addEventListener('pointerup', handlePointerUp);
+    interactionLayer.addEventListener('pointercancel', handlePointerCancel);
+    interactionLayer.addEventListener('lostpointercapture', handleLostPointerCapture);
+    reducedMotionQuery.addEventListener('change', handleReducedMotionChange);
+
+    let animationFrameId = 0;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      group.rotation.y += 0.002;
-      group.rotation.x += 0.001;
+
+      if (!interaction.isDragging && !reducedMotion) {
+        if (Math.abs(interaction.velocityY) > INERTIA_MIN_VELOCITY) {
+          group.rotation.y += interaction.velocityY;
+          interaction.velocityY *= INERTIA_DAMPING;
+        } else {
+          interaction.velocityY = 0;
+        }
+
+        if (Math.abs(interaction.velocityX) > INERTIA_MIN_VELOCITY) {
+          group.rotation.x = clampPitch(group.rotation.x + interaction.velocityX);
+          interaction.velocityX *= INERTIA_DAMPING;
+        } else {
+          interaction.velocityX = 0;
+        }
+
+        group.rotation.y += AUTO_ROTATE_Y;
+        group.rotation.x = clampPitch(group.rotation.x + AUTO_ROTATE_X);
+      }
+
       group.position.y = Math.sin(Date.now() * 0.001) * 0.3;
       renderer.render(scene, camera);
     };
@@ -194,9 +400,15 @@ export default function ThreeOrb() {
 
     return () => {
       window.removeEventListener('resize', updateSize);
+      interactionLayer.removeEventListener('pointerdown', handlePointerDown);
+      interactionLayer.removeEventListener('pointermove', handlePointerMove, POINTER_MOVE_OPTIONS);
+      interactionLayer.removeEventListener('pointerup', handlePointerUp);
+      interactionLayer.removeEventListener('pointercancel', handlePointerCancel);
+      interactionLayer.removeEventListener('lostpointercapture', handleLostPointerCapture);
+      reducedMotionQuery.removeEventListener('change', handleReducedMotionChange);
       cancelAnimationFrame(animationFrameId);
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
+      if (canvasHost.contains(renderer.domElement)) {
+        canvasHost.removeChild(renderer.domElement);
       }
       earthGeometry.dispose();
       earthMaterial.dispose();
@@ -213,7 +425,9 @@ export default function ThreeOrb() {
 
   return (
     <div ref={containerRef} className={styles.orbContainer}>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 bg-electric-500/20 dark:bg-electric-500/30 rounded-full blur-[60px] md:blur-[80px] pointer-events-none" />
+      <div ref={canvasHostRef} className={styles.canvasHost} aria-hidden="true" />
+      <div ref={interactionRef} className={styles.interactionLayer} aria-hidden="true" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 bg-electric-500/20 dark:bg-electric-500/30 rounded-full blur-[60px] md:blur-[80px] pointer-events-none z-0" />
     </div>
   );
 }

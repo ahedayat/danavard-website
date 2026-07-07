@@ -3,8 +3,15 @@
 import Image from 'next/image';
 import { Github, Instagram, Linkedin, Twitter } from 'lucide-react';
 import useUIStore from '@/stores/ui-store';
-import { content } from '@/data/site-content';
+import { content, type SocialIconKey } from '@/data/site-content';
 import { handleAnchorClick } from '@/lib/scroll';
+
+const socialIconMap: Record<SocialIconKey, React.ElementType> = {
+  twitter: Twitter,
+  linkedin: Linkedin,
+  github: Github,
+  instagram: Instagram,
+};
 
 export default function FooterSection() {
   const lang = useUIStore((s) => s.lang);
@@ -45,15 +52,22 @@ export default function FooterSection() {
               {t.footer.slogan}
             </p>
             <div className="flex items-center gap-4">
-              {[Twitter, Linkedin, Github, Instagram].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-electric-500 hover:text-white transition-all hover:-translate-y-1"
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
+              {t.footer.socialLinks.map((social) => {
+                const Icon = socialIconMap[social.icon];
+
+                return (
+                  <a
+                    key={social.icon}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.ariaLabel ?? social.name}
+                    className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-electric-500 hover:text-white transition-all hover:-translate-y-1"
+                  >
+                    <Icon size={18} />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
